@@ -16,6 +16,7 @@ const PipBoyPortfolio = () => {
     { id: 7, name: 'Night Owl', desc: 'Debugged through countless late-night breakthroughs', unlocked: true },
     { id: 8, name: 'System Stable', desc: 'Continues to adapt, learn, and upgrade', unlocked: true }
   ]);
+  const [showProjectsNav, setShowProjectsNav] = useState(false);
   const scrollRef = useRef(null);
   const inputRef = useRef(null);
   const caseStudy1Ref = useRef(null);
@@ -37,7 +38,7 @@ const PipBoyPortfolio = () => {
   }, [activeTab]);
 
   const navigateToCaseStudy = (caseNumber) => {
-    setActiveTab('DATA');
+    setActiveTab('CASE STUDIES');
     setTimeout(() => {
       let targetRef;
       switch(caseNumber) {
@@ -152,7 +153,6 @@ than before.
 ├─ DESC: Audio-reactive 3D particle system that visualizes live 
 │        Spotify playback.
 ├─ ACHIEVEMENT: Integrated real-time frequency analysis with dynamic lighting.
-├─ CASE STUDY: Type 'CASE_01' to view full technical breakdown
 └─ SOURCE: https://github.com/Abel4773/Spotify-visualizer
 
 [PROJ_002] Weather-Scrobble Mapper (In Progress)
@@ -162,7 +162,6 @@ than before.
 ├─ DESC: Interactive 3D map correlating a user's music listening 
 │        patterns with local weather data.
 ├─ ACHIEVEMENT: Prototype uses temporal data to visualize mood vs. climate.
-├─ CASE STUDY: Type 'CASE_02' to view full technical breakdown
 └─ SOURCE: In Development
 
 [PROJ_003] Digital Forensics Toolkit
@@ -172,7 +171,6 @@ than before.
 ├─ DESC: Unified security and incident response framework for threat 
 │        detection and forensic insight.
 ├─ ACHIEVEMENT: Built SIEM enrichment pipeline and automated remediation system.
-├─ CASE STUDY: Type 'CASE_03' to view full technical breakdown
 └─ SOURCE: Professional Work
 
 [PROJ_004] Portfolio Terminal (This Project)
@@ -182,7 +180,6 @@ than before.
 ├─ DESC: A Pip-Boy–style interactive portfolio merging retro aesthetics 
 │        with modern web tech.
 ├─ ACHIEVEMENT: Blends narrative design with technical presentation.
-├─ CASE STUDY: Type 'CASE_04' to view full technical breakdown
 └─ SOURCE: https://github.com/Abel4773/portfolio
 `,
       'CASE_01': () => navigateToCaseStudy(1),
@@ -300,18 +297,27 @@ Type any command to get started!
     
     if (output === '__CLEAR__') {
       setTerminalOutput([]);
+      setShowProjectsNav(false);
       return;
     }
 
     // Handle function commands (like CASE_01, etc.)
     if (typeof output === 'function') {
       output();
+      setShowProjectsNav(false);
       setTerminalOutput(prev => [...prev, 
         { type: 'command', text: `> ${cmd}`, time: timestamp },
-        { type: 'system', text: '[SYSTEM] Navigating to case study in DATA tab...', time: timestamp },
+        { type: 'system', text: '[SYSTEM] Navigating to case study in CASE STUDIES tab...', time: timestamp },
         { type: 'system', text: '[SYSTEM] Navigation complete', time: timestamp }
       ]);
       return;
+    }
+
+    // Show navigation buttons if PROJECTS.LOG is executed
+    if (cmdUpper === 'PROJECTS.LOG') {
+      setShowProjectsNav(true);
+    } else {
+      setShowProjectsNav(false);
     }
 
     setTerminalOutput(prev => [...prev, 
@@ -387,7 +393,7 @@ Type any command to get started!
 
         {/* Tab Navigation */}
         <div className="flex gap-1 px-4 pt-2" style={{ background: 'rgba(0,255,65,0.02)' }}>
-          {['STATS', 'INVENTORY', 'DATA'].map(tab => (
+          {['STATS', 'PROJECTS', 'CASE STUDIES'].map(tab => (
             <button
               key={tab}
               onClick={() => setActiveTab(tab)}
@@ -521,7 +527,7 @@ Type any command to get started!
             </>
           )}
 
-          {activeTab === 'INVENTORY' && (
+          {activeTab === 'PROJECTS' && (
             <>
               <div className="p-3 border-l-2" style={{ borderColor: '#00ff41', background: 'rgba(0,255,65,0.03)' }}>
                 <div className="text-xs font-bold mb-3">PROJECT INVENTORY :: EXPANDED DOCUMENTATION</div>
@@ -678,7 +684,7 @@ Type any command to get started!
             </>
           )}
 
-          {activeTab === 'DATA' && (
+          {activeTab === 'CASE STUDIES' && (
             <>
               <div className="p-3 border-l-2" style={{ borderColor: '#00ff41', background: 'rgba(0,255,65,0.03)' }}>
                 <div className="text-xs font-bold mb-3">IN-DEPTH PROJECT ANALYSIS</div>
@@ -1356,6 +1362,45 @@ Type any command to get started!
               )}
             </div>
           ))}
+
+          {/* Case Study Navigation Buttons (shown after PROJECTS.LOG) */}
+          {showProjectsNav && (
+            <div className="mt-4 p-3 border" style={{ borderColor: '#00ff41', background: 'rgba(0,255,65,0.05)' }}>
+              <div className="text-xs font-bold mb-3" style={{ color: '#00ff41' }}>
+                ╔═══════════════════════════════════════════════════════════════════╗
+                <br/>
+                ║ QUICK NAVIGATION :: JUMP TO CASE STUDIES                         ║
+                <br/>
+                ╚═══════════════════════════════════════════════════════════════════╝
+              </div>
+              <div className="grid grid-cols-2 gap-2">
+                <button
+                  onClick={() => navigateToCaseStudy(1)}
+                  className="text-left p-2 border hover:bg-white/10 transition-colors"
+                  style={{ borderColor: '#00ff41', color: '#00ff41', background: 'transparent' }}>
+                  &gt; CASE_01: Spotify Visualizer
+                </button>
+                <button
+                  onClick={() => navigateToCaseStudy(2)}
+                  className="text-left p-2 border hover:bg-white/10 transition-colors"
+                  style={{ borderColor: '#00ff41', color: '#00ff41', background: 'transparent' }}>
+                  &gt; CASE_02: Weather-Scrobble Mapper
+                </button>
+                <button
+                  onClick={() => navigateToCaseStudy(3)}
+                  className="text-left p-2 border hover:bg-white/10 transition-colors"
+                  style={{ borderColor: '#00ff41', color: '#00ff41', background: 'transparent' }}>
+                  &gt; CASE_03: Digital Forensics Toolkit
+                </button>
+                <button
+                  onClick={() => navigateToCaseStudy(4)}
+                  className="text-left p-2 border hover:bg-white/10 transition-colors"
+                  style={{ borderColor: '#00ff41', color: '#00ff41', background: 'transparent' }}>
+                  &gt; CASE_04: Portfolio Terminal
+                </button>
+              </div>
+            </div>
+          )}
 
         </div>
 
