@@ -7,8 +7,9 @@ const PipBoyPortfolio = () => {
   const [historyIndex, setHistoryIndex] = useState(-1);
   const [activeTab, setActiveTab] = useState('STATS');
   const [achievements, setAchievements] = useState([
-    { id: 1, name: 'BSc Cybersecurity & Digital Forensics', desc: 'Graduated with Honors', unlocked: true },
-    { id: 2, name: 'Data Center Technician', desc: 'Two years of hands-on infrastructure experience (Akamai)', unlocked: true },
+    { id: 9, name: 'MSc Design with Behaviour Science', desc: 'Imperial College London (quest in progress)', unlocked: true },
+    { id: 1, name: 'BSc Cybersecurity & Digital Forensics', desc: 'First Class Honours', unlocked: true },
+    { id: 2, name: 'Data Centre Engineer', desc: 'Three years keeping mission-critical infrastructure running (Akamai)', unlocked: true },
     { id: 3, name: 'Freelance Web Developer', desc: 'Designed and deployed multiple client projects', unlocked: true },
     { id: 4, name: 'Audiovisual Alchemist', desc: 'Built custom visualizers reacting to real-time music data', unlocked: true },
     { id: 5, name: 'Investigator', desc: 'Led mock incident response simulations for forensic practice', unlocked: true },
@@ -17,12 +18,33 @@ const PipBoyPortfolio = () => {
     { id: 8, name: 'System Stable', desc: 'Continues to adapt, learn, and upgrade', unlocked: true }
   ]);
   const [showProjectsNav, setShowProjectsNav] = useState(false);
+  const [clock, setClock] = useState(() => new Date());
   const scrollRef = useRef(null);
   const inputRef = useRef(null);
   const caseStudy1Ref = useRef(null);
   const caseStudy2Ref = useRef(null);
   const caseStudy3Ref = useRef(null);
   const caseStudy4Ref = useRef(null);
+
+  // Live status-bar clock
+  useEffect(() => {
+    const id = setInterval(() => setClock(new Date()), 1000);
+    return () => clearInterval(id);
+  }, []);
+
+  // Ctrl+L clears the terminal from anywhere on the page
+  useEffect(() => {
+    const onKey = (e) => {
+      if (e.ctrlKey && (e.key === 'l' || e.key === 'L')) {
+        e.preventDefault();
+        setTerminalOutput([]);
+        setShowProjectsNav(false);
+        inputRef.current?.focus();
+      }
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, []);
 
   useEffect(() => {
     if (scrollRef.current && terminalOutput.length > 0) {
@@ -54,10 +76,58 @@ const PipBoyPortfolio = () => {
     }, 150); // Increased timeout to allow tab change scroll reset to happen first
   };
 
+  const CONTACT_LINKS = [
+    { label: 'EMAIL', href: 'mailto:habtuabel@proton.me' },
+    { label: 'LINKEDIN', href: 'https://www.linkedin.com/in/abelhb' },
+    { label: 'GITHUB', href: 'https://github.com/Abel4773' },
+    { label: 'RESUME (PDF)', href: '/resume.pdf' },
+  ];
+
+  const MEETING_LINK = {
+    label: 'REQUEST MEETING',
+    href: 'mailto:habtuabel@proton.me?subject=' + encodeURIComponent('Meeting request via abelh.xyz') +
+      '&body=' + encodeURIComponent('Hi Abel,\n\nI\'d like to set up a call to discuss...\n\nSome times that work for me:\n- \n- \n\nThanks,\n'),
+  };
+
+  // Commands that attach clickable links underneath their text output
+  const LINKS_FOR = {
+    'CONTACT.SYS': CONTACT_LINKS,
+    'SCHEDULE --MEETING': [MEETING_LINK, CONTACT_LINKS[1]],
+  };
+
+  const exportResume = async (cmd, timestamp) => {
+    setShowProjectsNav(false);
+    setTerminalOutput(prev => [...prev,
+      { type: 'command', text: `> ${cmd}`, time: timestamp },
+      { type: 'system', text: '[SYSTEM] Compiling personnel dossier...', time: timestamp },
+    ]);
+    let available = false;
+    try {
+      const res = await fetch('/resume.pdf', { method: 'HEAD' });
+      available = res.ok && (res.headers.get('content-type') || '').includes('pdf');
+    } catch { available = false; }
+    setTerminalOutput(prev => [...prev, ...(available ? [
+      { type: 'output', text: '[EXPORT] Resume ready  ████████████ 100%\n\nOpen or download it below.', time: timestamp },
+      { type: 'links', links: [{ label: 'OPEN RESUME (PDF)', href: '/resume.pdf' }, { label: 'DOWNLOAD', href: '/resume.pdf', download: 'Abel-Habtu-Resume.pdf' }], time: timestamp },
+    ] : [
+      { type: 'output', text: '[EXPORT] Public copy not on file. Resume available on request.', time: timestamp },
+      { type: 'links', links: [{ label: 'REQUEST RESUME', href: 'mailto:habtuabel@proton.me?subject=' + encodeURIComponent('Resume request via abelh.xyz') }], time: timestamp },
+    ]), { type: 'system', text: '[SYSTEM] Execution complete', time: timestamp }]);
+  };
+
   const executeCommand = (cmd) => {
     const timestamp = new Date().toLocaleTimeString();
     const cmdUpper = cmd.toUpperCase();
     
+    if (cmdUpper === 'EXPORT --RESUME') {
+      exportResume(cmd, timestamp);
+      return;
+    }
+
+    if (cmdUpper === 'STATS --DETAILED') {
+      setActiveTab('STATS');
+    }
+
     const isCommandButton = ['ABOUT.EXE', 'SKILLS.DAT', 'PROJECTS.LOG', 'CONTACT.SYS'].includes(cmdUpper);
     
     if (isCommandButton) {
@@ -83,6 +153,10 @@ const PipBoyPortfolio = () => {
 [CLASS] Creative Technologist | Digital Forensics Enthusiast
 [CLEARANCE] Adaptive Generalist
 [STATUS] Active // Curious // Always Building
+
+[EDUCATION]
+→ MSc Design with Behaviour Science, Imperial College London (in progress)
+→ BSc Cybersecurity & Digital Forensics, First Class Honours
 
 [DESCRIPTION]
 An adaptable engineer driven by curiosity and creative problem-solving. 
@@ -195,12 +269,14 @@ than before.
 ├─ EMAIL: habtuabel@proton.me
 ├─ LINKEDIN: linkedin.com/in/abelhb
 ├─ GITHUB: github.com/Abel4773
-├─ PORTFOLIO: [this site]
+└─ Quick links below ↓
 
 [AVAILABILITY]
-├─ Open to roles in UX/UI, Creative Technology, or Digital Forensics
-├─ Interested in hybrid positions exploring data, visuals, and systems
-├─ Location: Remote / London-based
+├─ Seeking: product, UX & behavioural design, creative technology
+├─ Also open to: digital forensics roles
+├─ Now: part-time roles during term
+├─ Next: Summer 2027 internships, graduate roles from late 2027
+├─ Location: London-based / remote
 ├─ Response Time: <24h
 
 [SYSTEM_STATUS]
@@ -213,11 +289,14 @@ than before.
 ║ ACHIEVEMENT LOG :: MILESTONES UNLOCKED                           ║
 ╚═══════════════════════════════════════════════════════════════════╝
 
-✓ BSC CYBERSECURITY & DIGITAL FORENSICS
-  └─ Graduated with Honors
+✓ MSC DESIGN WITH BEHAVIOUR SCIENCE
+  └─ Imperial College London (quest in progress)
 
-✓ DATA CENTER TECHNICIAN
-  └─ Two years of hands-on infrastructure experience (Akamai)
+✓ BSC CYBERSECURITY & DIGITAL FORENSICS
+  └─ First Class Honours
+
+✓ DATA CENTRE ENGINEER
+  └─ Three years keeping mission-critical infrastructure running (Akamai)
 
 ✓ FREELANCE WEB DEVELOPER
   └─ Designed and deployed multiple client projects
@@ -237,7 +316,7 @@ than before.
 ✓ SYSTEM STABLE
   └─ Continues to adapt, learn, and upgrade
 
-[SYSTEM] All achievements unlocked: 8/8 (100%)
+[SYSTEM] All achievements unlocked: 9/9 (100%)
 `,
       'HELP': `
 ╔═══════════════════════════════════════════════════════════════════╗
@@ -268,7 +347,6 @@ than before.
 
 [SHORTCUTS]
 ├─ Arrow Up/Down ......... Navigate command history
-├─ Tab ................... Auto-complete (coming soon)
 └─ Ctrl+L ................ Clear screen
 
 [EASTER_EGGS]
@@ -290,8 +368,50 @@ Type any command to get started!
       'COFFEE': '☕ Brewing coffee... [████████████] 100% - READY',
       'HACK': 'Access denied. Nice try though! 😎',
       'NUKE': '☢️  Launch codes required. This incident will be reported.',
-      'PING': 'PONG! Response time: 12ms'
+      'PING': 'PONG! Response time: 12ms',
+      'STATS --DETAILED': `
+╔═══════════════════════════════════════════════════════════════════╗
+║ EXTENDED STATISTICS :: FULL DIAGNOSTIC                           ║
+╚═══════════════════════════════════════════════════════════════════╝
+
+[CHARACTER]
+├─ NAME ........... ABEL_HABTU
+├─ CLASS .......... Creative Technologist
+├─ BASE ........... London, UK (remote available)
+└─ CURRENT QUEST .. MSc Design with Behaviour Science, Imperial
+
+[ATTRIBUTES]
+${attributes.map((a, i) => `${i === attributes.length - 1 ? '└' : '├'}─ ${(a.name + ' [' + a.abbr + ']').padEnd(26, '.')} ${String(a.value).padStart(3)}  [${'█'.repeat(Math.round(a.value / 10))}${'░'.repeat(10 - Math.round(a.value / 10))}]  XP ${a.xp.toLocaleString()}`).join('\n')}
+
+[RECORD]
+├─ Freelance web practice ..... running since 2021
+├─ Infrastructure ............. 3 years, data centre engineer (Akamai)
+├─ Shipped builds ............. 12 web + creative projects
+├─ Visual experiments ......... 7 audio-reactive / data-driven
+└─ Achievements ............... ${achievements.filter(a => a.unlocked).length}/${achievements.length} unlocked
+
+[PERKS]
+→ Security mindset in design work
+→ Turns messy data into something you can feel
+→ Equally at home in Figma or a terminal
+`,
+      'SCHEDULE --MEETING': `
+╔═══════════════════════════════════════════════════════════════════╗
+║ SCHEDULER :: MEETING REQUEST                                     ║
+╚═══════════════════════════════════════════════════════════════════╝
+
+[AVAILABILITY]
+├─ Timezone ....... London (UK time)
+├─ Format ......... Video call or in person in London
+└─ Response ....... Usually within 24h
+
+[PROTOCOL]
+→ Hit REQUEST MEETING below to open a pre-filled email
+→ Suggest a couple of times and what you'd like to discuss
+`
     };
+
+    const links = LINKS_FOR[cmdUpper];
 
     const output = commands[cmdUpper];
     
@@ -324,6 +444,7 @@ Type any command to get started!
       { type: 'command', text: `> ${cmd}`, time: timestamp },
       { type: 'system', text: '[SYSTEM] Executing command...', time: timestamp },
       { type: 'output', text: output || `[ERROR] Command not recognized. Type HELP for available commands.`, time: timestamp },
+      ...(links ? [{ type: 'links', links, time: timestamp }] : []),
       { type: 'system', text: '[SYSTEM] Execution complete', time: timestamp }
     ]);
   };
@@ -364,8 +485,8 @@ Type any command to get started!
   ];
 
   return (
-    <div className="w-full h-full flex items-center justify-center p-4" style={{ backgroundColor: '#0a0e0a' }}>
-      <div className="flex flex-col h-[520px] w-full max-w-6xl" style={{ 
+    <div className="w-full h-full flex items-center justify-center p-2 sm:p-4" style={{ backgroundColor: '#0a0e0a' }}>
+      <div className="flex flex-col h-full sm:h-[520px] w-full max-w-6xl" style={{ 
         background: '#0a0e0a',
         fontFamily: "'Courier New', monospace",
         color: '#00ff41',
@@ -380,24 +501,24 @@ Type any command to get started!
               <span className="animate-pulse" style={{ color: '#00ff41' }}>●</span>
               <span>CONNECTED</span>
             </div>
-            <span style={{ opacity: 0.5 }}>|</span>
-            <span style={{ opacity: 0.7 }}>SYS.BIOS v2.4.1</span>
+            <span className="hidden sm:inline" style={{ opacity: 0.5 }}>|</span>
+            <span className="hidden sm:inline" style={{ opacity: 0.7 }}>SYS.BIOS v2.4.1</span>
             <div className="flex-1"></div>
-            <span style={{ opacity: 0.7 }}>CPU: 12%</span>
-            <span style={{ opacity: 0.5 }}>|</span>
-            <span style={{ opacity: 0.7 }}>MEM: 2.3GB</span>
-            <span style={{ opacity: 0.5 }}>|</span>
-            <span style={{ opacity: 0.7 }}>{new Date().toLocaleTimeString()}</span>
+            <span className="hidden sm:inline" style={{ opacity: 0.7 }}>CPU: 12%</span>
+            <span className="hidden sm:inline" style={{ opacity: 0.5 }}>|</span>
+            <span className="hidden sm:inline" style={{ opacity: 0.7 }}>MEM: 2.3GB</span>
+            <span className="hidden sm:inline" style={{ opacity: 0.5 }}>|</span>
+            <span style={{ opacity: 0.7 }}>{clock.toLocaleTimeString('en-GB')}</span>
           </div>
         </div>
 
         {/* Tab Navigation */}
-        <div className="flex gap-1 px-4 pt-2" style={{ background: 'rgba(0,255,65,0.02)' }}>
+        <div className="flex gap-1 px-2 sm:px-4 pt-2 overflow-x-auto" style={{ background: 'rgba(0,255,65,0.02)' }}>
           {['STATS', 'PROJECTS', 'CASE STUDIES'].map(tab => (
             <button
               key={tab}
               onClick={() => setActiveTab(tab)}
-              className="px-3 py-1 text-xs border-b-2 transition-all"
+              className="px-3 py-1 text-xs border-b-2 transition-all whitespace-nowrap"
               style={{ 
                 borderColor: activeTab === tab ? '#00ff41' : 'transparent',
                 color: activeTab === tab ? '#00ff41' : '#00ff4166',
@@ -412,7 +533,7 @@ Type any command to get started!
         {/* Scrollable Content Area */}
         <div 
           ref={scrollRef}
-          className="flex-1 overflow-y-auto p-4 space-y-3" 
+          className="flex-1 overflow-y-auto p-3 sm:p-4 space-y-3" 
           style={{ background: 'linear-gradient(180deg, rgba(0,255,65,0.03) 0%, transparent 100%)' }}
         >
           
@@ -421,13 +542,20 @@ Type any command to get started!
             {/* Passport-style Profile Picture */}
             <div className="w-24 h-32 border-2 flex items-center justify-center overflow-hidden" style={{ borderColor: '#00ff41', background: 'rgba(0,255,65,0.05)', flexShrink: 0 }}>
               <img 
-                src="https://images2.imgbox.com/da/33/dB440li2_o.jpeg" 
+                src="/profile.jpeg" 
                 alt="Abel Habtu"
-                className="w-full h-full object-cover"
+                onError={(e) => { e.currentTarget.style.display = 'none'; }}
+                className="w-full h-full object-cover object-top"
               />
             </div>
             
-            <pre className="text-xs leading-tight flex-1" style={{ color: '#00ff41', opacity: 0.8 }}>
+            <div className="md:hidden flex-1 min-w-0 self-center">
+              <div className="text-xs" style={{ opacity: 0.6 }}>// PERSONNEL TERMINAL</div>
+              <div className="font-bold text-lg leading-tight">ABEL HABTU</div>
+              <div className="text-xs mt-1" style={{ opacity: 0.8 }}>Creative Technologist</div>
+              <div className="text-xs" style={{ opacity: 0.6 }}>MSc Design with Behaviour Science @ Imperial</div>
+            </div>
+            <pre className="hidden md:block text-xs leading-tight flex-1" style={{ color: '#00ff41', opacity: 0.8 }}>
 {`
  ██████╗  ██████╗ ██████╗ ████████╗███████╗ ██████╗ ██╗     ██╗ ██████╗ 
  ██╔══██╗██╔═══██╗██╔══██╗╚══██╔══╝██╔════╝██╔═══██╗██║     ██║██╔═══██╗
@@ -446,7 +574,7 @@ Type any command to get started!
           {activeTab === 'STATS' && (
             <>
               {/* Character Info */}
-              <div className="grid grid-cols-3 gap-3">
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 sm:gap-3">
                 <div className="py-2 px-3 border" style={{ borderColor: '#00ff41', background: 'rgba(0,255,65,0.05)' }}>
                   <div className="text-xs mb-1" style={{ opacity: 0.7 }}>CHARACTER</div>
                   <div className="font-bold text-sm">ABEL_HABTU</div>
@@ -473,20 +601,20 @@ Type any command to get started!
                 
                 {attributes.map((attr, idx) => (
                   <div key={idx} className="mb-2">
-                    <div className="flex items-center gap-2 mb-1">
-                      <span className="text-xs" style={{ width: '140px' }}>{attr.name} [{attr.abbr}]</span>
+                    <div className="flex flex-wrap sm:flex-nowrap items-center gap-x-2 gap-y-1 mb-1">
+                      <span className="text-xs w-full sm:w-[140px] sm:shrink-0">{attr.name} [{attr.abbr}]</span>
                       <div className="flex-1 h-4 border" style={{ borderColor: '#00ff4166', background: 'rgba(0,0,0,0.3)' }}>
                         <div style={{ width: `${attr.value}%`, height: '100%', background: '#00ff41', boxShadow: '0 0 10px rgba(0,255,65,0.5)' }}></div>
                       </div>
                       <span className="text-xs" style={{ width: '30px', textAlign: 'right' }}>{attr.value}</span>
                     </div>
-                    <div className="text-xs ml-[140px]" style={{ opacity: 0.5 }}>XP: {attr.xp.toLocaleString()}</div>
+                    <div className="text-xs sm:ml-[148px]" style={{ opacity: 0.5 }}>XP: {attr.xp.toLocaleString()}</div>
                   </div>
                 ))}
               </div>
 
               {/* Stats Grid */}
-              <div className="grid grid-cols-4 gap-2 text-xs">
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-2 text-xs">
                 <div className="p-2 border text-center" style={{ borderColor: '#00ff4133', background: 'rgba(0,255,65,0.03)' }}>
                   <div style={{ opacity: 0.6 }}>PROJECTS</div>
                   <div className="font-bold text-lg">12</div>
@@ -511,8 +639,8 @@ Type any command to get started!
 
               {/* Achievements Preview */}
               <div className="p-3 border" style={{ borderColor: '#00ff4133', background: 'rgba(0,255,65,0.03)' }}>
-                <div className="text-xs font-bold mb-2">ACHIEVEMENTS (8/8)</div>
-                <div className="grid grid-cols-3 gap-2">
+                <div className="text-xs font-bold mb-2">ACHIEVEMENTS ({achievements.filter(a => a.unlocked).length}/{achievements.length})</div>
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
                   {achievements.slice(0, 3).map(a => (
                     <div key={a.id} className="text-xs p-1 border" style={{ 
                       borderColor: a.unlocked ? '#00ff4133' : '#ffffff11',
@@ -556,7 +684,7 @@ Type any command to get started!
                     <div>→ Featured interactive camera controls and scene transitions tied to playback events</div>
                     <div>→ Serves as a portfolio centerpiece for creative web development</div>
                   </div>
-                  <div className="flex gap-2 mt-2">
+                  <div className="flex flex-wrap gap-2 mt-2">
                     <button
                        onClick={() => navigateToCaseStudy(1)}
                        className="text-xs px-3 py-1 border hover:bg-white/10 transition-colors cursor-pointer"
@@ -594,7 +722,7 @@ Type any command to get started!
                     <div>→ Built modular layers for temperature, humidity, and mood indexing</div>
                     <div>→ Introduced animated arcs visualizing global listening flow</div>
                   </div>
-                  <div className="flex gap-2 mt-2">
+                  <div className="flex flex-wrap gap-2 mt-2">
                     <button
                        onClick={() => navigateToCaseStudy(2)}
                        className="text-xs px-3 py-1 border hover:bg-white/10 transition-colors cursor-pointer"
@@ -629,7 +757,7 @@ Type any command to get started!
                     <div>→ Built searchable interface to visualize file timeline activity</div>
                     <div>→ Implemented chain-of-custody documentation simulation</div>
                   </div>
-                  <div className="flex gap-2 mt-2">
+                  <div className="flex flex-wrap gap-2 mt-2">
                     <button
                        onClick={() => navigateToCaseStudy(3)}
                        className="text-xs px-3 py-1 border hover:bg-white/10 transition-colors cursor-pointer"
@@ -665,7 +793,7 @@ Type any command to get started!
                     <div>→ Designed consistent neon visual identity and interface logic</div>
                     <div>→ Blends storytelling, aesthetics, and code into one coherent experience</div>
                   </div>
-                  <div className="flex gap-2 mt-2">
+                  <div className="flex flex-wrap gap-2 mt-2">
                     <button
                        onClick={() => navigateToCaseStudy(4)}
                        className="text-xs px-3 py-1 border hover:bg-white/10 transition-colors cursor-pointer"
@@ -1350,12 +1478,24 @@ Type any command to get started!
                 <div style={{ color: '#00ff41', opacity: 0.7 }}>{output.text}</div>
               )}
               {output.type === 'output' && (
-                <pre className="whitespace-pre-wrap p-2 my-1 border" style={{ 
+                <pre className="whitespace-pre sm:whitespace-pre-wrap overflow-x-auto p-2 my-1 border text-[10px] sm:text-[11px]" style={{ 
                   background: 'rgba(0,255,65,0.05)',
                   borderColor: '#00ff4133',
-                  fontSize: '11px',
                   lineHeight: '1.4'
                 }}>{output.text}</pre>
+              )}
+              {output.type === 'links' && (
+                <div className="flex flex-wrap gap-2 my-1">
+                  {output.links.map(l => (
+                    <a key={l.label} href={l.href} download={l.download}
+                       target={l.href.startsWith('http') ? '_blank' : undefined}
+                       rel={l.href.startsWith('http') ? 'noopener noreferrer' : undefined}
+                       className="px-3 py-1 border hover:bg-white/10 transition-colors"
+                       style={{ borderColor: '#00ff41', color: '#00ff41', textDecoration: 'none' }}>
+                      &gt; {l.label}
+                    </a>
+                  ))}
+                </div>
               )}
               {output.type === 'error' && (
                 <div style={{ color: '#ff4136' }}>{output.text}</div>
@@ -1366,14 +1506,17 @@ Type any command to get started!
           {/* Case Study Navigation Buttons (shown after PROJECTS.LOG) */}
           {showProjectsNav && (
             <div className="mt-4 p-3 border" style={{ borderColor: '#00ff41', background: 'rgba(0,255,65,0.05)' }}>
-              <div className="text-xs font-bold mb-3" style={{ color: '#00ff41' }}>
+              <div className="sm:hidden text-xs font-bold mb-3" style={{ color: '#00ff41' }}>
+                QUICK NAVIGATION :: JUMP TO CASE STUDIES
+              </div>
+              <div className="hidden sm:block text-xs font-bold mb-3" style={{ color: '#00ff41' }}>
                 ╔═══════════════════════════════════════════════════════════════════╗
                 <br/>
                 ║ QUICK NAVIGATION :: JUMP TO CASE STUDIES                         ║
                 <br/>
                 ╚═══════════════════════════════════════════════════════════════════╝
               </div>
-              <div className="grid grid-cols-2 gap-2">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                 <button
                   onClick={() => navigateToCaseStudy(1)}
                   className="text-left p-2 border hover:bg-white/10 transition-colors"
@@ -1405,7 +1548,7 @@ Type any command to get started!
         </div>
 
         {/* Bottom Command Input */}
-        <div className="border-t px-4 py-2 flex items-center gap-2" style={{ borderColor: '#00ff4133', background: '#0f150f' }}>
+        <div className="border-t px-3 sm:px-4 py-2 flex items-center gap-2" style={{ borderColor: '#00ff4133', background: '#0f150f' }}>
           <span>&gt;</span>
           <input 
             ref={inputRef}
@@ -1413,12 +1556,12 @@ Type any command to get started!
             value={inputValue}
             onChange={(e) => setInputValue(e.target.value)}
             onKeyDown={handleKeyDown}
-            className="flex-1 bg-transparent border-none outline-none text-xs" 
+            className="flex-1 min-w-0 bg-transparent border-none outline-none text-base sm:text-xs" 
             style={{ color: '#00ff41', caretColor: '#00ff41' }}
             placeholder="Type HELP for available commands..."
             autoComplete="off"
           />
-          <span className="text-xs" style={{ opacity: 0.5 }}>
+          <span className="hidden sm:inline text-xs" style={{ opacity: 0.5 }}>
             {commandHistory.length > 0 && '↑↓ history'}
           </span>
         </div>
